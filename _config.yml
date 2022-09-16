@@ -20,7 +20,7 @@ description: > # this means to ignore newlines until "baseurl:"
   程序媛/quiet quitter/阿宅
 url: wpoachedegg.github.io/Just-A-Note/ # the base hostname & protocol for your site, e.g. http://example.com
 # baseurl: "" # the subpath of your site, e.g. /blog
-relurl: "/Just-A-Note" 
+relurl: "/Just-A-Note/" 
 sitesearchurl: WPoachedEgg.github.io
 
 # Markdown Processors
