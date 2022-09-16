@@ -19,8 +19,8 @@ email: poachedEgg@outlook.com
 description: > # this means to ignore newlines until "baseurl:"
   程序媛/quiet quitter/阿宅
 url: wpoachedegg.github.io/Just-A-Note/ # the base hostname & protocol for your site, e.g. http://example.com
-# baseurl: "" # the subpath of your site, e.g. /blog
-relurl: "/Just-A-Note/" 
+baseurl: "" # the subpath of your site, e.g. /blog
+relurl: "/Just-A-Note" 
 sitesearchurl: WPoachedEgg.github.io
 
 # Markdown Processors
@@ -37,14 +37,18 @@ mathjax: false
 excerpt_separator: <!-- more -->
 
 permalink: /:categories/:title.html
-
+comments_provider: gitalk
 social_media:
   github_url: https://github.com/WPoachedEgg
   weibo_url: http://weibo.com/u/NA
   zhihu_url: https://www.zhihu.com/people/NA
   twitter_url: https://twitter.com/NA
   lofter_url: http://NA.lofter.com/
-
+gitalk:
+    owner: WPoachedEgg
+    repo: Just-A-Note
+    clientID: 3b4df41eeeba0031e638
+    clientSecret: c8df6591c4d30eed1e476452875cde23a0431e18
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list
 # to override the default setting.
