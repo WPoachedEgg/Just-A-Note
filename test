@@ -1,6 +1,78 @@
-[InlineData(
-    "LS0tLUJFR0lOIFJTQSBQUklWQVRFIEtFWS0tLS0KTUlJQ1hBSUJBAAoKCk15IGNvbnRlbnQgaXMgbGVuZ3RoeQo=LS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0t",
-    true)] // Base64-encoded RSA private key
-[InlineData(
-    "LS0tLUJFR0lOIFBHUCBQUklWQVRFIEtFWSBCTE9DSy0tLS0KVGVzdCB0ZXh0Cmxlbmd0aA==LS0tLUVORCBQR1AgUFJJVkFURSBLRVkgQkxPQ0stLS0t",
-    true)] // Base64-encoded PGP private key
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Xunit;
+
+public class UploadRequestTests
+{
+    [Theory]
+    [MemberData(nameof(GetValidModels))]
+    public void ModelValidation_ValidModel_ReturnsNoValidationErrors(UploadRequest model)
+    {
+        // Act
+        var validationResults = ValidateModel(model);
+
+        // Assert
+        Assert.Empty(validationResults); // No validation errors expected
+    }
+
+    [Theory]
+    [MemberData(nameof(GetInvalidModels))]
+    public void ModelValidation_InvalidModel_ReturnsValidationErrors(UploadRequest model)
+    {
+        // Act
+        var validationResults = ValidateModel(model);
+
+        // Assert
+        Assert.NotEmpty(validationResults); // Validation errors expected
+    }
+
+    private List<ValidationResult> ValidateModel(object model)
+    {
+        var validationResults = new List<ValidationResult>();
+        var validationContext = new ValidationContext(model);
+        Validator.TryValidateObject(model, validationContext, validationResults, true);
+        return validationResults;
+    }
+
+    public static IEnumerable<object[]> GetValidModels()
+    {
+        yield return new object[]
+        {
+            new UploadRequest
+            {
+                FileName = "example.txt",
+                Destination = "/upload/path",
+                PrivateKey = "-----BEGIN RSA PRIVATE KEY-----MIICXAIBAAKBgQCh+Xm2oBG...-----END RSA PRIVATE KEY-----",
+                PrivatePgpKeySigning = "-----BEGIN PGP PRIVATE KEY BLOCK-----ValidKey-----END PGP PRIVATE KEY BLOCK-----",
+                PublicPgpKeyForEncryption = "-----BEGIN PGP PUBLIC KEY BLOCK-----ValidKey-----END PGP PUBLIC KEY BLOCK-----"
+            }
+        };
+    }
+
+    public static IEnumerable<object[]> GetInvalidModels()
+    {
+        yield return new object[]
+        {
+            new UploadRequest
+            {
+                FileName = "example.txt",
+                Destination = "/upload/path",
+                PrivateKey = "InvalidKey", // Invalid private key format
+                PrivatePgpKeySigning = "-----BEGIN RSA PRIVATE KEY-----InvalidKey-----END RSA PRIVATE KEY-----",
+                PublicPgpKeyForEncryption = "InvalidKey"
+            }
+        };
+
+        yield return new object[]
+        {
+            new UploadRequest
+            {
+                FileName = "example.txt",
+                Destination = "/upload/path",
+                PrivateKey = null, // Null is valid, but the attribute won't validate it
+                PrivatePgpKeySigning = "InvalidKey",
+                PublicPgpKeyForEncryption = null
+            }
+        };
+    }
+}
