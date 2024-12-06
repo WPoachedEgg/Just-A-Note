@@ -1,0 +1,39 @@
+using Xunit;
+
+public class KeyValidationUtilityTests
+{
+    [Theory]
+    [InlineData("-----BEGIN RSA PRIVATE KEY-----\nMIICXAIBAAKBgQCh+Xm2oBG...\n-----END RSA PRIVATE KEY-----", true)]
+    [InlineData("-----BEGIN PGP PRIVATE KEY BLOCK-----\nVersion: GnuPG v1.4.7 (GNU/Linux)\n\nlQOYBFkAwX0BCAD...\n-----END PGP PRIVATE KEY BLOCK-----", true)]
+    [InlineData("-----BEGIN PUBLIC KEY-----\nMIICXAIBAAKBgQCh+Xm2oBG...\n-----END PUBLIC KEY-----", false)]
+    [InlineData("Invalid String", false)]
+    public void IsValidPrivateKey_PlainTextInput_ReturnsExpectedResult(string input, bool expected)
+    {
+        bool result = KeyValidationUtility.IsValidPrivateKey(input);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("LS0tLUJFR0lOIFJTQSBQUklWQVRFIEtFWS0tLS0KTUlJQ1hBSUJBAQsKLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0t", true)] // Base64-encoded RSA private key
+    [InlineData("LS0tLUJFR0lOIFBHUCBQUklWQVRFIEtFWSBCTE9DSy0tLS0KVHJ1ZSBWSUVX", true)] // Base64-encoded PGP private key
+    [InlineData("VHJ1ZSBWSUVX", false)] // Invalid Base64-encoded content
+    public void IsValidPrivateKey_Base64Input_ReturnsExpectedResult(string base64Input, bool expected)
+    {
+        bool result = KeyValidationUtility.IsValidPrivateKey(base64Input);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void IsValidPrivateKey_EmptyInput_ReturnsFalse()
+    {
+        bool result = KeyValidationUtility.IsValidPrivateKey("");
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsValidPrivateKey_NullInput_ReturnsFalse()
+    {
+        bool result = KeyValidationUtility.IsValidPrivateKey(null);
+        Assert.False(result);
+    }
+}
