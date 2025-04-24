@@ -1,37 +1,36 @@
-Context
+Summary
 
-During security testing and review using Burp Suite, it was discovered that the Strict-Transport-Security header is missing from some responses — specifically in requests routed through conditional blocks inside our NGINX configuration (e.g., for .well-known/*, /b2c/mslogin/*, etc.).
-
-This occurs because add_header directives in NGINX do not apply from includes placed outside if blocks when the final response is processed inside the if. To ensure consistent application of security headers, we are moving the include conf.d/common_response_headers.include; into each if block that handles a response.
+This PR addresses a previously reported security vulnerability related to a misconfigured Content-Security-Policy (CSP) header in the VendorManagementSpa. The original implementation relied on insecure wildcard sources (*), the use of unsafe-inline, and included unused third-party domains (e.g., Google Tag Manager) which introduced potential attack vectors including CSP bypass via known JSONP endpoints.
 
 ⸻
 
-List of Changes
-	•	Updated nginx_config files across all SPA projects to:
-	•	Explicitly include conf.d/common_response_headers.include inside any if block that handles requests directly (e.g., by setting headers or content-type).
-	•	Ensure all add_header directives within common_response_headers.include use the always flag.
-	•	Reviewed all location blocks across deployed NGINX configs to confirm header consistency.
-	•	Added temporary X-Debug-Served-By header to support debugging response origin during QA testing.
+Key Changes
+	•	Replaced unsafe-inline usage with nonce-based inline script execution using a dynamic CSP_NONCE placeholder.
+	•	Removed wildcard subdomain references (e.g., *.mapbox.com, *.googleapis.com) and replaced them with explicit, minimal domain listings (e.g., https://maps.googleapis.com, https://api.mapbox.com).
+	•	Eliminated unnecessary dependencies, including removal of Google Tag Manager scripts from the application.
+	•	Updated CSP meta tag to support stricter policy rules that improve browser-level script execution enforcement.
+	•	Added support for nonce injection via NGINX using sub_filter CSP_NONCE $request_id, ensuring runtime injection of a unique nonce per request.
 
 ⸻
 
-Impact Analysis
-	•	Security Hardening: This change ensures Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, and other security headers are applied consistently across all HTTP responses, regardless of logic inside if blocks.
-	•	No Functional Change: The actual routing and SPA behavior remain unchanged. Only header behavior is affected.
-	•	Slight Increase in Config Redundancy: Some duplication of include statements occurs, but this is necessary due to NGINX’s add_header scoping behavior.
-	•	Prepared for Audit: This fix directly addresses a known security audit finding and ensures compliance with OWASP Secure Headers best practices.
+Security Impact
+
+This change:
+	•	Mitigates CSP bypass risks associated with wildcard sources and JSONP endpoints.
+	•	Blocks inline script injection, a common vector in Cross-Site Scripting (XSS) attacks.
+	•	Improves overall security posture and aligns with OWASP CSP best practices and Google CSP Evaluator recommendations.
+	•	Enables fine-grained script trust using per-request nonces tied to the NGINX $request_id.
 
 ⸻
 
-Testing
-	•	✅ Manual Verification:
-	•	Used curl -I to verify that Strict-Transport-Security is returned from all tested endpoints, including:
-	•	Direct browser access
-	•	XHR-based requests (CORS)
-	•	.well-known/apple-app-site-association
-	•	/b2c/mslogin/unified.html
-	•	Confirmed X-Debug-Served-By appears in expected responses (to trace NGINX routing).
-	•	✅ Burp Suite Re-Test:
-	•	Validated that all previously failing responses now include security headers.
-	•	✅ Regression Check:
-	•	Confirmed no unintended header duplication or override issues.
+Validation Steps
+	1.	Verified nonce injection with DevTools (<script nonce="...">) and matching CSP meta directive.
+	2.	Confirmed all CSP violations are resolved in console.
+	3.	Evaluated final CSP with Google CSP Evaluator — no critical issues flagged.
+	4.	Verified that Google Maps APIs load and function as expected.
+
+⸻
+
+Follow-Up
+	•	Ensure $request_id is configured and logged consistently across environments.
+	•	Monitor logs and CSP violation reports (if enabled) for post-deploy feedback.
